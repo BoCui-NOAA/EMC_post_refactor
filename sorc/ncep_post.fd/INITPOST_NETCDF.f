@@ -472,12 +472,12 @@
       end if
       if(me==0)print*,'nhcas= ',nhcas
       if (nhcas == 0 ) then  !non-hydrostatic case
-       nrec=15
+       nrec=14
        allocate (recname(nrec))
        recname=[character(len=20) :: 'ugrd','vgrd','spfh','tmp','o3mr', &
                                      'presnh','dzdt', 'clwmr','dpres',  &
                                      'delz','icmr','rwmr',              &
-                                     'snmr','grle','cld_amt']
+                                     'snmr','grle']
       else
        nrec=8
        allocate (recname(nrec))
@@ -848,9 +848,6 @@
        call read_netcdf_3d_scatter(me,ncid3d,1,im,jm,jsta,jsta_2l &
        ,jend_2u,MPI_COMM_COMP,icnt,idsp,spval,recname(14) &
        ,lm,qqg(1,jsta_2l,1))
-       call read_netcdf_3d_scatter(me,ncid3d,1,im,jm,jsta,jsta_2l &
-       ,jend_2u,MPI_COMM_COMP,icnt,idsp,spval,recname(15) &
-       ,lm,cfr(1,jsta_2l,1))
 ! calculate CWM from FV3 output
        do l=1,lm
        do j=jsta,jend
@@ -1254,6 +1251,16 @@
 !          end do
 !        end do
 !      end do
+
+! instantaneous 3D cloud fraction
+      VarName='cldfra'
+!      do l=1,lm
+        call read_netcdf_3d_scatter(me,ncid2d,1,im,jm,jsta,jsta_2l &
+        ,jend_2u,MPI_COMM_COMP,icnt,idsp,spval,VarName &
+        ,lm,cfr(1,jsta_2l,1))
+!       if(debugprint)print*,'sample ',VarName,'isa,jsa,l =' &
+!          ,cfr(isa,jsa,l),isa,jsa,l
+!      enddo
 
       VarName='refl_10cm'
 !      do l=1,lm
@@ -2825,9 +2832,13 @@
       integer            :: iret,i,j,jj,varid,l
       real dummy(im,jm,lm),dummy2(im,jm,lm)
       real,parameter     :: spval_netcdf=-1.e+10
+      real               :: fill_value
+      real,parameter     :: small=1.E-6
 
       if(me == 0) then
         iret = nf90_inq_varid(ncid,trim(varname),varid)
+        iret = nf90_get_att(ncid,varid,"_FillValue",fill_value)
+        if (iret /= 0) fill_value = spval_netcdf
         !print*,stat,varname,varid
         iret = nf90_get_var(ncid,varid,dummy2)
 !        iret = nf90_get_var(ncid,varid,dummy2,start=(/1,1,l,ifhr/), &
@@ -2850,7 +2861,7 @@
             jj=j
             do i=1,im
               dummy(i,j,l)=dummy2(i,jj,l)
-              if(dummy(i,j,l)==spval_netcdf)dummy(i,j,l)=spval
+              if(abs(dummy(i,j,l)-fill_value)<small)dummy(i,j,l)=spval
             end do
            end do
            end do
@@ -2879,11 +2890,15 @@
       integer            :: iret,i,j,jj,varid
       real,parameter     :: spval_netcdf=9.99e+20
 ! dong for hgtsfc 2d var but with 3d missing value
-      real,parameter     :: spval_netcdf_3d=-1.e+10
+      real,parameter     :: spval_netcdf_3d=-1.e+10 
+      real,parameter     :: small=1.E-6
+      real               :: fill_value
       real dummy(im,jm),dummy2(im,jm)
 
       if(me == 0) then
         iret = nf90_inq_varid(ncid,trim(varname),varid)
+        iret = nf90_get_att(ncid,varid,"_FillValue",fill_value)
+        if (iret /= 0) fill_value = spval_netcdf
         !print*,stat,varname,varid
         iret = nf90_get_var(ncid,varid,dummy2)
         !iret = nf90_get_var(ncid,varid,dummy2,start=(/1,1,ifhr/), &
@@ -2903,13 +2918,7 @@
             jj=j
             do i=1,im
               dummy(i,j)=dummy2(i,jj)
-! dong for hgtsfc and pressfc
-              if (trim(varname) .eq. "hgtsfc" .or. trim(varname)  &
-                 .eq. "pressfc") then                                   
-                if(abs(dummy(i,j)-spval_netcdf_3d)<0.1)dummy(i,j)=spval
-              else
-                if(abs(dummy(i,j)-spval_netcdf)<0.1)dummy(i,j)=spval
-              end if
+              if(abs(dummy2(i,jj)-fill_value)<small)dummy(i,j)=spval
             end do
            end do
         end if

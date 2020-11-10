@@ -50,7 +50,7 @@
                          up_heli_min, up_heli_min16, up_heli_max02,           &
                          up_heli_min02, up_heli_max03, up_heli_min03,         &
                          rel_vort_max, rel_vort_max01, hail_max2d, hail_maxk1,&
-                         refdm10c_max,rel_vort_maxhy1,                        &
+                         hail_maxhailcast,refdm10c_max, rel_vort_maxhy1,      &
                          ltg1_max, ltg2_max, ltg3_max, up_heli, up_heli16,    &
                          nci_ltg, nca_ltg, nci_wq, nca_wq, nci_refd, nca_refd,&
                          u10, v10, u10h, v10h
@@ -286,9 +286,6 @@
                 ENDDO
                 ENDDO
              endif
-             ID(1:25)=0
-             ID(02)=129
-             ID(11) = NINT(ZAGL(LP))
              if(grib=='grib2') then
                cfld=cfld+1
                fld_info(cfld)%ifld=IAVBLFLD(IGET(253))
@@ -303,9 +300,6 @@
                GRID1(I,J)=DBZR1(I,J)
              ENDDO
              ENDDO
-             ID(1:25)=0
-             ID(02)=129
-             ID(11) = NINT(ZAGL(LP))
              if(grib=='grib2') then
                cfld=cfld+1
                fld_info(cfld)%ifld=IAVBLFLD(IGET(279))
@@ -320,9 +314,6 @@
                GRID1(I,J)=DBZI1(I,J)
              ENDDO
              ENDDO
-             ID(1:25)=0
-             ID(02)=129
-             ID(11) = NINT(ZAGL(LP))
              if(grib=='grib2') then
                cfld=cfld+1
                fld_info(cfld)%ifld=IAVBLFLD(IGET(280))
@@ -337,9 +328,6 @@
                GRID1(I,J)=DBZC1(I,J)
              ENDDO
              ENDDO
-             ID(1:25)=0
-             ID(02)=129
-             ID(11) = NINT(ZAGL(LP))
              if(grib=='grib2') then
                cfld=cfld+1
                fld_info(cfld)%ifld=IAVBLFLD(IGET(281))
@@ -365,26 +353,15 @@
                GRID1(I,J)=REFD_MAX(I,J)
              ENDDO
              ENDDO
-             ID(1:25)=0
-             ID(02)=129
-             ID(9)=105
-             ID(11) = NINT(ZAGL(2))
-             ID(20) = 2
-             ID(19) = IFHR
-             IF (IFHR.EQ.0) THEN
-               ID(18) = 0
-             ELSE
-               ID(18) = IFHR - 1
-             ENDIF
              if(grib=='grib2') then
                cfld=cfld+1
                fld_info(cfld)%ifld=IAVBLFLD(IGET(421))
                fld_info(cfld)%lvl=LVLSXML(LP,IGET(421))
                fld_info(cfld)%tinvstat=1
                if (IFHR .gt. 0) then
-                  fld_info(cfld)%ntrange=1
+                  fld_info(cfld)%tinvstat=1
                else
-                  fld_info(cfld)%ntrange=0
+                  fld_info(cfld)%tinvstat=0
                endif
                fld_info(cfld)%ntrange=1
                datapd(1:im,1:jend-jsta+1,cfld)=GRID1(1:im,jsta:jend)
@@ -398,17 +375,6 @@
                GRID1(I,J)=REFDM10C_MAX(I,J)
              ENDDO
              ENDDO
-             ID(1:25)=0
-             ID(02)=129
-             ID(9)=105
-             ID(11) = NINT(ZAGL(2))
-             ID(20) = 2
-             ID(19) = IFHR 
-             IF (IFHR.EQ.0) THEN 
-               ID(18) = 0
-             ELSE 
-               ID(18) = IFHR - 1
-             ENDIF
              if(grib=='grib2') then 
                cfld=cfld+1
                fld_info(cfld)%ifld=IAVBLFLD(IGET(785))
@@ -430,19 +396,6 @@
                GRID1(I,J)=UP_HELI_MAX(I,J)
              ENDDO
              ENDDO
-             ID(1:25)=0
-             ID(02)=129
-!             ID(11) = NINT(ZAGL(2))
-             ID(9) = 106
-             ID(10) = 50
-             ID(11) = 20
-             ID(20) = 2
-             ID(19) = IFHR
-             IF (IFHR.EQ.0) THEN
-               ID(18) = 0
-             ELSE
-               ID(18) = IFHR - 1
-             ENDIF
              if(grib=='grib2') then
                cfld=cfld+1
                fld_info(cfld)%ifld=IAVBLFLD(IGET(420))
@@ -464,19 +417,6 @@
                GRID1(I,J)=UP_HELI_MAX16(I,J)
              ENDDO
              ENDDO
-             ID(1:25)=0
-             ID(02)=129
-!             ID(11) = NINT(ZAGL(2))
-             ID(9) = 106
-             ID(10) = 60
-             ID(11) = 10
-             ID(20) = 2
-             ID(19) = IFHR
-             IF (IFHR.EQ.0) THEN
-               ID(18) = 0
-             ELSE
-               ID(18) = IFHR - 1
-             ENDIF
              if(grib=='grib2') then
                cfld=cfld+1
                fld_info(cfld)%ifld=IAVBLFLD(IGET(700))
@@ -498,19 +438,6 @@
                GRID1(I,J)=UP_HELI_MIN(I,J)
              ENDDO
              ENDDO
-             ID(1:25)=0
-             ID(02)=129
-!             ID(11) = NINT(ZAGL(2))
-             ID(9) = 106
-             ID(10) = 50 
-             ID(11) = 20 
-             ID(20) = 2
-             ID(19) = IFHR 
-             IF (IFHR.EQ.0) THEN 
-               ID(18) = 0
-             ELSE 
-               ID(18) = IFHR - 1
-             ENDIF
              if(grib=='grib2') then 
                cfld=cfld+1
                fld_info(cfld)%ifld=IAVBLFLD(IGET(786))
@@ -532,19 +459,6 @@
                GRID1(I,J)=UP_HELI_MIN16(I,J)
              ENDDO
              ENDDO
-             ID(1:25)=0
-             ID(02)=129
-!             ID(11) = NINT(ZAGL(2))
-             ID(9) = 106
-             ID(10) = 60 
-             ID(11) = 10 
-             ID(20) = 2
-             ID(19) = IFHR 
-             IF (IFHR.EQ.0) THEN 
-               ID(18) = 0
-             ELSE 
-               ID(18) = IFHR - 1
-             ENDIF
              if(grib=='grib2') then 
                cfld=cfld+1
                fld_info(cfld)%ifld=IAVBLFLD(IGET(787))
@@ -566,19 +480,6 @@
                GRID1(I,J)=UP_HELI_MAX02(I,J)
              ENDDO
              ENDDO
-             ID(1:25)=0
-             ID(02)=129
-!             ID(11) = NINT(ZAGL(2))
-             ID(9) = 106
-             ID(10) = 50
-             ID(11) = 20
-             ID(20) = 2
-             ID(19) = IFHR
-             IF (IFHR.EQ.0) THEN
-               ID(18) = 0
-             ELSE
-               ID(18) = IFHR - 1
-             ENDIF
              if(grib=='grib2') then
                cfld=cfld+1
                fld_info(cfld)%ifld=IAVBLFLD(IGET(788))
@@ -599,19 +500,6 @@
                GRID1(I,J)=UP_HELI_MIN02(I,J)
              ENDDO
              ENDDO
-             ID(1:25)=0
-             ID(02)=129
-!             ID(11) = NINT(ZAGL(2))
-             ID(9) = 106
-             ID(10) = 60
-             ID(11) = 10
-             ID(20) = 2
-             ID(19) = IFHR
-             IF (IFHR.EQ.0) THEN
-               ID(18) = 0
-             ELSE
-               ID(18) = IFHR - 1
-             ENDIF
              if(grib=='grib2') then
                cfld=cfld+1
                fld_info(cfld)%ifld=IAVBLFLD(IGET(789))
@@ -633,19 +521,6 @@
                GRID1(I,J)=UP_HELI_MAX03(I,J)
              ENDDO
              ENDDO
-             ID(1:25)=0
-             ID(02)=129
-!             ID(11) = NINT(ZAGL(2))
-             ID(9) = 106
-             ID(10) = 50
-             ID(11) = 20
-             ID(20) = 2
-             ID(19) = IFHR
-             IF (IFHR.EQ.0) THEN
-               ID(18) = 0
-             ELSE
-               ID(18) = IFHR - 1
-             ENDIF
              if(grib=='grib2') then
                cfld=cfld+1
                fld_info(cfld)%ifld=IAVBLFLD(IGET(790))
@@ -667,19 +542,6 @@
                GRID1(I,J)=UP_HELI_MIN03(I,J)
              ENDDO
              ENDDO
-             ID(1:25)=0
-             ID(02)=129
-!             ID(11) = NINT(ZAGL(2))
-             ID(9) = 106
-             ID(10) = 60
-             ID(11) = 10
-             ID(20) = 2
-             ID(19) = IFHR
-             IF (IFHR.EQ.0) THEN
-               ID(18) = 0
-             ELSE
-               ID(18) = IFHR - 1
-             ENDIF
              if(grib=='grib2') then
                cfld=cfld+1
                fld_info(cfld)%ifld=IAVBLFLD(IGET(791))
@@ -701,19 +563,6 @@
                GRID1(I,J)=REL_VORT_MAX(I,J)
              ENDDO
              ENDDO
-             ID(1:25)=0
-             ID(02)=129
-!             ID(11) = NINT(ZAGL(2))
-             ID(9) = 106
-             ID(10) = 50
-             ID(11) = 20
-             ID(20) = 2
-             ID(19) = IFHR
-             IF (IFHR.EQ.0) THEN
-               ID(18) = 0
-             ELSE
-               ID(18) = IFHR - 1
-             ENDIF
              if(grib=='grib2') then
                cfld=cfld+1
                fld_info(cfld)%ifld=IAVBLFLD(IGET(792))
@@ -735,19 +584,6 @@
                GRID1(I,J)=REL_VORT_MAX01(I,J)
              ENDDO
              ENDDO
-             ID(1:25)=0
-             ID(02)=129
-!             ID(11) = NINT(ZAGL(2))
-             ID(9) = 106
-             ID(10) = 60
-             ID(11) = 10
-             ID(20) = 2
-             ID(19) = IFHR
-             IF (IFHR.EQ.0) THEN
-               ID(18) = 0
-             ELSE
-               ID(18) = IFHR - 1
-             ENDIF
              if(grib=='grib2') then
                cfld=cfld+1
                fld_info(cfld)%ifld=IAVBLFLD(IGET(793))
@@ -768,19 +604,6 @@
                GRID1(I,J)=REL_VORT_MAXHY1(I,J)
              ENDDO
              ENDDO
-             ID(1:25)=0
-             ID(02)=129
-!             ID(11) = NINT(ZAGL(2))
-             ID(9) = 106
-             ID(10) = 60
-             ID(11) = 10
-             ID(20) = 2
-             ID(19) = IFHR
-             IF (IFHR.EQ.0) THEN
-               ID(18) = 0
-             ELSE
-               ID(18) = IFHR - 1
-             ENDIF
              if(grib=='grib2') then
                cfld=cfld+1
                fld_info(cfld)%ifld=IAVBLFLD(IGET(890))
@@ -802,19 +625,6 @@
                GRID1(I,J)=HAIL_MAX2D(I,J)
              ENDDO
              ENDDO
-             ID(1:25)=0
-             ID(02)=129
-!             ID(11) = NINT(ZAGL(2))
-             ID(9) = 106
-             ID(10) = 60
-             ID(11) = 10
-             ID(20) = 2
-             ID(19) = IFHR
-             IF (IFHR.EQ.0) THEN
-               ID(18) = 0
-             ELSE
-               ID(18) = IFHR - 1
-             ENDIF
              if(grib=='grib2') then 
                cfld=cfld+1
                fld_info(cfld)%ifld=IAVBLFLD(IGET(794))
@@ -836,23 +646,33 @@
                GRID1(I,J)=HAIL_MAXK1(I,J)
              ENDDO
              ENDDO
-             ID(1:25)=0
-             ID(02)=129
-!             ID(11) = NINT(ZAGL(2))
-             ID(9) = 106
-             ID(10) = 60
-             ID(11) = 10
-             ID(20) = 2
-             ID(19) = IFHR
-             IF (IFHR.EQ.0) THEN
-               ID(18) = 0
-             ELSE
-               ID(18) = IFHR - 1
-             ENDIF
              if(grib=='grib2') then 
                cfld=cfld+1
                fld_info(cfld)%ifld=IAVBLFLD(IGET(795))
                fld_info(cfld)%lvl=LVLSXML(LP,IGET(795))
+               if (ifhr == 0) then
+                  fld_info(cfld)%tinvstat = 0
+               else
+                  fld_info(cfld)%tinvstat = 1
+               endif
+               fld_info(cfld)%ntrange = 1
+               datapd(1:im,1:jend-jsta+1,cfld) = GRID1(1:im,jsta:jend)
+             endif
+          END IF
+
+!---  Max hail diameter at surface from WRF HAILCAST algorithm (HRRR
+!applications)
+!     (J. Kenyon/GSD, added 1 May 2019)
+          IF((IGET(728).GT.0) )THEN
+             DO J=JSTA,JEND
+             DO I=1,IM
+               GRID1(I,J)=HAIL_MAXHAILCAST(I,J)/1000.0 ! convert mm to m
+             ENDDO
+             ENDDO
+             if(grib=='grib2') then
+               cfld=cfld+1
+               fld_info(cfld)%ifld=IAVBLFLD(IGET(728))
+               fld_info(cfld)%lvl=LVLSXML(LP,IGET(728))
                if (ifhr == 0) then
                   fld_info(cfld)%tinvstat = 0
                else
@@ -870,15 +690,6 @@
                GRID1(I,J)=GRPL_MAX(I,J)
              ENDDO
              ENDDO
-             ID(1:25)=0
-             ID(02)=129
-             ID(20) = 2
-             ID(19) = IFHR
-             IF (IFHR.EQ.0) THEN
-               ID(18) = 0
-             ELSE
-               ID(18) = IFHR - 1
-             ENDIF
              if(grib=='grib2') then
                cfld=cfld+1
                fld_info(cfld)%ifld=IAVBLFLD(IGET(429))
@@ -900,15 +711,6 @@
                GRID1(I,J)=LTG1_MAX(I,J)
              ENDDO
              ENDDO
-             ID(1:25)=0
-             ID(02)=2
-             ID(20) = 2
-             ID(19) = IFHR
-             IF (IFHR.EQ.0) THEN
-               ID(18) = 0
-             ELSE
-               ID(18) = IFHR - 1
-             ENDIF
              if(grib=='grib2') then
                cfld=cfld+1
                fld_info(cfld)%ifld=IAVBLFLD(IGET(702))
@@ -930,15 +732,6 @@
                GRID1(I,J)=LTG2_MAX(I,J)
              ENDDO
              ENDDO
-             ID(1:25)=0
-             ID(02)=2
-             ID(20) = 2
-             ID(19) = IFHR
-             IF (IFHR.EQ.0) THEN
-               ID(18) = 0
-             ELSE
-               ID(18) = IFHR - 1
-             ENDIF
              if(grib=='grib2') then
                cfld=cfld+1
                fld_info(cfld)%ifld=IAVBLFLD(IGET(703))
@@ -960,15 +753,6 @@
                GRID1(I,J)=LTG3_MAX(I,J)
              ENDDO
              ENDDO
-             ID(1:25)=0
-             ID(02)=2
-             ID(20) = 2
-             ID(19) = IFHR
-             IF (IFHR.EQ.0) THEN
-               ID(18) = 0
-             ELSE
-               ID(18) = IFHR - 1
-             ENDIF
              if(grib=='grib2') then
                cfld=cfld+1
                fld_info(cfld)%ifld=IAVBLFLD(IGET(704))
@@ -990,11 +774,6 @@
                GRID1(I,J)=UP_HELI(I,J)
              ENDDO
              ENDDO
-             ID(1:25)=0
-             ID(02)=129
-             ID(9) = 106
-             ID(10) = 50
-             ID(11) = 20
              if(grib=='grib2') then
                cfld=cfld+1
                fld_info(cfld)%ifld=IAVBLFLD(IGET(727))
@@ -1010,11 +789,6 @@
                GRID1(I,J)=UP_HELI16(I,J)
              ENDDO
              ENDDO
-             ID(1:25)=0
-             ID(02)=129
-             ID(9) = 106
-             ID(10) = 60
-             ID(11) = 10
              if(grib=='grib2') then
                cfld=cfld+1
                fld_info(cfld)%ifld=IAVBLFLD(IGET(701))
@@ -1030,8 +804,6 @@
                GRID1(I,J)=NCI_LTG(I,J)/60.0
              ENDDO
              ENDDO
-             ID(1:25)=0
-             ID(02)=2
              if(grib=='grib2') then
                cfld=cfld+1
                fld_info(cfld)%ifld=IAVBLFLD(IGET(705))
@@ -1053,8 +825,6 @@
                GRID1(I,J)=NCA_LTG(I,J)/60.0
              ENDDO
              ENDDO
-             ID(1:25)=0
-             ID(02)=2
              if(grib=='grib2') then
                cfld=cfld+1
                fld_info(cfld)%ifld=IAVBLFLD(IGET(706))
@@ -1076,8 +846,6 @@
                GRID1(I,J)=NCI_WQ(I,J)/60.0
              ENDDO
              ENDDO
-             ID(1:25)=0
-             ID(02)=2
              if(grib=='grib2') then
                cfld=cfld+1
                fld_info(cfld)%ifld=IAVBLFLD(IGET(707))
@@ -1099,8 +867,6 @@
                GRID1(I,J)=NCA_WQ(I,J)/60.0
              ENDDO
              ENDDO
-             ID(1:25)=0
-             ID(02)=2
              if(grib=='grib2') then
                cfld=cfld+1
                fld_info(cfld)%ifld=IAVBLFLD(IGET(708))
@@ -1122,8 +888,6 @@
                GRID1(I,J)=NCI_REFD(I,J)/60.0
              ENDDO
              ENDDO
-             ID(1:25)=0
-             ID(02)=2
              if(grib=='grib2') then
                cfld=cfld+1
                fld_info(cfld)%ifld=IAVBLFLD(IGET(709))
@@ -1145,8 +909,6 @@
                GRID1(I,J)=NCA_REFD(I,J)/60.0
              ENDDO
              ENDDO
-             ID(1:25)=0
-             ID(02)=2
              if(grib=='grib2') then
                cfld=cfld+1
                fld_info(cfld)%ifld=IAVBLFLD(IGET(710))
@@ -1196,11 +958,9 @@
                   ZDUM=ZMID(I,J,L)-ZINT(I,J,LLMH+1)
                   IF(ZDUM >= ZAGL2(LP))THEN
                     NL1X(I,J)=L+1
-!                   GO TO 40
                     exit     
                   ENDIF
                 ENDDO
-   40           CONTINUE
 !
 !  IF THE AGL LEVEL IS BELOW THE LOWEST MODEL MIDLAYER
 !  BUT STILL ABOVE THE LOWEST MODEL BOTTOM INTERFACE,
@@ -1431,11 +1191,9 @@
                   ZDUM = ZMID(I,J,L)-ZINT(I,J,LLMH+1)
                   IF(ZDUM >= ZAGL3(LP))THEN
                     NL1X(I,J) = L+1
-!                   GO TO 50
                     exit     
                   ENDIF
                 ENDDO
-   50           CONTINUE
 !
 !  IF THE AGL LEVEL IS BELOW THE LOWEST MODEL MIDLAYER
 !  BUT STILL ABOVE THE LOWEST MODEL BOTTOM INTERFACE,
@@ -1538,8 +1296,6 @@
               GRID1(I,J)=0.5*RHO*(SQRT(UAGL(I,J)**2+VAGL(I,J)**2))**3
             ENDDO
             ENDDO
-            ID(1:25)=0
-            ID(11) = NINT(ZAGL3(LP))
             if(grib=="grib2" )then
               cfld=cfld+1
               fld_info(cfld)%ifld=IAVBLFLD(IGET(411))
@@ -1554,8 +1310,6 @@
               GRID1(I,J)=UAGL(I,J)
             ENDDO
             ENDDO
-            ID(1:25)=0
-            ID(11) = NINT(ZAGL3(LP))
             if(grib=="grib2" )then
               cfld=cfld+1
               fld_info(cfld)%ifld=IAVBLFLD(IGET(412))
@@ -1570,8 +1324,6 @@
               GRID1(I,J)=VAGL(I,J)
             ENDDO
             ENDDO
-            ID(1:25)=0
-            ID(11) = NINT(ZAGL3(LP))
             if(grib=="grib2" )then
               cfld=cfld+1
               fld_info(cfld)%ifld=IAVBLFLD(IGET(413))

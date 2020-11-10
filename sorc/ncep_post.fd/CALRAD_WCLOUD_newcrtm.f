@@ -13,7 +13,7 @@ SUBROUTINE CALRAD_WCLOUD
   !            FUNCTION EFFR TO COMPUTE EFFECTIVE PARTICLE RADII 
   !            CHANNEL SELECTION USING LVLS FROM WRF_CNTRL.PARM
   !   19-04-01 Sharon NEBUDA - Added output option for GOES-16 & GOES-17 ABI IR Channels 7-16
-  !   20-03-25 Jesse Meng - remove grib1
+  !   20-04-09 Tracy Hertneky - Added Himawari-8 AHI CH7-CH16
   !
   ! USAGE:    CALL MDLFLD
   !   INPUT ARGUMENT LIST:
@@ -122,7 +122,7 @@ SUBROUTINE CALRAD_WCLOUD
   !      integer,parameter::  n_clouds = 4 
   integer,parameter::  n_aerosols = 0
   ! Add your sensors here
-  integer(i_kind),parameter:: n_sensors=21
+  integer(i_kind),parameter:: n_sensors=22
   character(len=20),parameter,dimension(1:n_sensors):: sensorlist= &
       (/'imgr_g15            ', &
         'imgr_g13            ', &
@@ -144,29 +144,31 @@ SUBROUTINE CALRAD_WCLOUD
         'imgr_insat3d        ', &
         'abi_gr              ', &
         'abi_g16             ', &
-        'abi_g17             '/)
-  character(len=12),parameter,dimension(1:n_sensors):: obslist=  &
-      (/'goes_img    ', &
-        'goes_img    ', &
-        'goes_img    ', &
-        'goes_img    ', &
-        'amsre       ', &
-        'tmi         ', &
-        'ssmi        ', &
-        'ssmi        ', &
-        'ssmi        ', &
-        'ssmis       ', &
-        'ssmis       ', &
-        'ssmis       ', &
-        'ssmis       ', &
-        'ssmis       ', &
-        'seviri      ', &
-        'imgr_mt2    ', &
-        'imgr_mt1r   ', &
-        'imgr_insat3d', &
-        'abi         ', &
-        'abi         ', &
-        'abi         '/)
+        'abi_g17             ', &
+        'ahi_himawari8       '/)
+  character(len=13),parameter,dimension(1:n_sensors):: obslist=  &
+      (/'goes_img     ', &
+        'goes_img     ', &
+        'goes_img     ', &
+        'goes_img     ', &
+        'amsre        ', &
+        'tmi          ', &
+        'ssmi         ', &
+        'ssmi         ', &
+        'ssmi         ', &
+        'ssmis        ', &
+        'ssmis        ', &
+        'ssmis        ', &
+        'ssmis        ', &
+        'ssmis        ', &
+        'seviri       ', &
+        'imgr_mt2     ', &
+        'imgr_mt1r    ', &
+        'imgr_insat3d ', &
+        'abi          ', &
+        'abi          ', &
+        'abi          ', &
+        'ahi_himawari8'/)
   character(len=20),dimension(1:n_sensors):: sensorlist_local
 !
   integer(i_kind) sensorindex
@@ -197,7 +199,7 @@ SUBROUTINE CALRAD_WCLOUD
   real,parameter:: constoz = 604229.0_r_kind 
   real sublat,sublon
   real RHO,RHOX
-  character(12)::obstype
+  character(13)::obstype
   character(20)::isis
   character(20)::isis_local
 
@@ -210,6 +212,7 @@ SUBROUTINE CALRAD_WCLOUD
   logical micrim,microwave
   logical post_abig16, post_abig17, post_abigr ! if true, user requested at least one abi channel
   logical fix_abig16, fix_abig17   ! if true, abi_g16, abi_g17 fix files are available
+  logical post_ahi8 ! if true, user requested at least on ahi channel (himawari8)
   !  logical,dimension(nobs):: luse
   logical, parameter :: debugprint = .false.
   type(crtm_atmosphere_type),dimension(1):: atmosphere
@@ -287,13 +290,17 @@ SUBROUTINE CALRAD_WCLOUD
   do n = 958, 958+9  ! 958 set in RQSTFLD.f
     if (iget(n) > 0) post_abigr=.true.
   enddo
+  post_ahi8=.false.
+  do n = 969, 969+9  ! 969 set in RQSTFLD.f
+    if (iget(n) > 0) post_ahi8=.true.
+  enddo
 
 
   !     DO NOT FORGET TO ADD YOUR NEW IGET HERE (IF YOU'VE ADDED ONE)      
   !     START SUBROUTINE CALRAD.
   ifactive: if (iget(327) > 0 .or. iget(328) > 0 .or. iget(329) > 0       &
        .or. iget(330) > 0 .or. iget(446) > 0 .or. iget(447) > 0  & 
-       .or. iget(448) > 0 .or. iget(449) > 0  .or. iget(456) > 0   &
+       .or. iget(448) > 0 .or. iget(449) > 0 .or. iget(456) > 0  &
        .or. iget(457) > 0 .or. iget(458) > 0 .or. iget(459) > 0  &
        .or. iget(460) > 0 .or. iget(461) > 0 .or. iget(462) > 0  &
        .or. iget(463) > 0 .or. iget(483) > 0 .or. iget(484) > 0  &
@@ -325,9 +332,10 @@ SUBROUTINE CALRAD_WCLOUD
        .or. iget(865) > 0 .or. iget(866) > 0 .or. iget(867) > 0  &
        .or. iget(868) > 0 .or. iget(869) > 0 .or. iget(870) > 0  &
        .or. iget(871) > 0 .or. iget(872) > 0 .or. iget(873) > 0  &
-       .or. iget(874) > 0 .or. iget(875) > 0 .or. iget(876) > 0  & 
+       .or. iget(874) > 0 .or. iget(875) > 0 .or. iget(876) > 0  &
        .or. iget(877) > 0 .or. iget(878) > 0 .or. iget(879) > 0  &
-       .or. iget(880) > 0 .or. iget(881) > 0 .or. iget(882) > 0  &    
+       .or. iget(880) > 0 .or. iget(881) > 0 .or. iget(882) > 0  &
+       .or. post_ahi8 & 
        .or. post_abig16 .or. post_abig17 .or. post_abigr ) then
 
      ! specify numbers of cloud species    
@@ -339,6 +347,9 @@ SUBROUTINE CALRAD_WCLOUD
      else if(imp_physics==8 .or. imp_physics==6 .or. imp_physics==2 &
         .or. imp_physics==28 .or. imp_physics==11)then
         n_clouds=5
+     else
+        n_clouds=0
+        print*,'Warning: number of cloud species (n_clouds) being set to zero for imp_physics=',imp_physics
      end if
 
      ! Initialize debug print gridpoint index to middle of tile:
@@ -359,7 +370,7 @@ SUBROUTINE CALRAD_WCLOUD
               czen(i,j)=cos(sun_zenith_rad)
 	   end do
 	end do
-        if(jj>=jsta .and. jj<=jend.and.debugprint)                                  &
+        if(jj>=jsta .and. jj<=jend.and.debugprint)                   &
             print*,'sample GFS zenith angle=',acos(czen(ii,jj))*rtd   
 !     end if	       
      ! Initialize CRTM.  Load satellite sensor array.
@@ -431,6 +442,20 @@ SUBROUTINE CALRAD_WCLOUD
        endif
      endif
 
+     ! Himawari-8 AHI infrared 
+     if(post_ahi8)then
+       nchanl=0
+       do n = 969, 969+9  ! 969 set in RQSTFLD.f
+         if (iget(n) > 0) then
+           nchanl = nchanl+1
+         endif
+       enddo
+       if (nchanl > 0 .and. nchanl <10) then 
+         do n = 969, 969+9  ! 969 set in RQSTFLD.f
+           if (iget(n) == 0) channelinfo(22)%Process_Channel(n-969+1)=.False.  !  turn off channel processing
+         enddo
+       endif
+     endif
 
      ! SSMI, F13-F15 (19H,19V,??H,37H,37V,85H,85V)
      if(iget(800)>0)then
@@ -471,9 +496,14 @@ SUBROUTINE CALRAD_WCLOUD
      call select_channels_L(channelinfo(17),4,(/ 1,2,3,4 /),lvls(1:4,iget(864)),iget(864))
      endif
      ! INSAT 3D (Kalpana)
-     if(iget(864)>0)then
+     if(iget(865)>0)then
      call select_channels_L(channelinfo(18),4,(/ 1,2,3,4 /),lvls(1:4,iget(865)),iget(865))
      endif
+     ! Himiwari-8 AHI infrared
+     if(iget(969)>0)then
+     call select_channels_L(channelinfo(19),10,(/1,2,3,4,5,6,7,8,9,10/),lvls(1:10,iget(969)),iget(969))
+     endif
+
 
      ! Loop over data types to process    
      sensordo: do isat=1,n_sensors
@@ -510,7 +540,8 @@ SUBROUTINE CALRAD_WCLOUD
              (isis=='abi_g16'  .and. post_abig16) .OR. &
              (isis=='abi_g17'  .and. post_abig17) .OR. &
              (isis=='abi_gr'   .and. post_abigr) .OR. &
-             (isis=='seviri_m10' .and. iget(876)>0) )then
+             (isis=='seviri_m10' .and. iget(876)>0) .OR. &
+             (isis=='ahi_himawari8' .and. post_ahi8) )then
            if(me==0)print*,'obstype, isis= ',obstype,isis
            !       isis='amsua_n15'
 
@@ -1100,9 +1131,6 @@ SUBROUTINE CALRAD_WCLOUD
                              grid1(i,j)=tb(i,j,ichan)
                           enddo
                        enddo
-                       id(1:25) = 0
-                       id(02) = 133
-                       id(8) = 175 + ixchan 
                        if (grib=="grib2") then
                           cfld=cfld+1
                           fld_info(cfld)%ifld=IAVBLFLD(igot)
@@ -1121,9 +1149,6 @@ SUBROUTINE CALRAD_WCLOUD
                              grid1(i,j) = tb(i,j,ichan)
                           enddo
                        enddo
-                       id(1:25) = 0
-                       id(02) = 133
-                       id(8) = 175 + ixchan 
                        if (grib=="grib2") then
                           cfld=cfld+1
                           fld_info(cfld)%ifld=IAVBLFLD(igot)
@@ -1143,9 +1168,6 @@ SUBROUTINE CALRAD_WCLOUD
                              grid1(i,j) = tb(i,j,ichan)
                           enddo
                        enddo
-                       id(1:25) = 0
-                       id(02) = 130
-                       id(8) = 240 + ixchan
                        if (grib=="grib2") then
                           cfld=cfld+1
                           fld_info(cfld)%ifld=IAVBLFLD(igot)
@@ -1165,9 +1187,6 @@ SUBROUTINE CALRAD_WCLOUD
                              grid1(i,j)=tb(i,j,ichan)
                            enddo
                         enddo
-                        id(1:25) = 0
-                        id(02) = 129
-                        id(8) = 212 + ixchan
                         if (grib=="grib2") then
                            cfld=cfld+1
                            fld_info(cfld)%ifld=IAVBLFLD(igot)
@@ -1179,18 +1198,14 @@ SUBROUTINE CALRAD_WCLOUD
               if (isis=='abi_gr')then  ! writing goes-r nadir to grib2
                  nc=0
                  do ixchan=1,10
-                   igot=iget(957+ixchan)
                    ichan=ixchan
+                   igot=iget(957+ixchan)
                    if(igot>0)then
                     do j=jsta,jend
                      do i=1,im
                       grid1(i,j)=tb(i,j,ichan)
                      enddo
                     enddo
-                    id(1:25) = 0
-                    id(02) = 2
-                    id(08) = 118
-                    id(09) = 109
                     if(grib=="grib2" )then
                      cfld=cfld+1
                      fld_info(cfld)%ifld=IAVBLFLD(igot)
@@ -1221,6 +1236,7 @@ SUBROUTINE CALRAD_WCLOUD
                         (isis=='abi_g16'  .and. post_abig16) .OR. &
                         (isis=='abi_g17'  .and. post_abig17) .OR. &
                         (isis=='seviri_m10' .and. iget(876)>0) .OR. &
+                        (isis=='ahi_himawari8' .and. post_ahi8) .OR. &
                         (isis=='imgr_g12' .and. (iget(456)>0 .or. &
                         iget(457)>0 .or. iget(458)>0 .or. iget(459)>0)) .or. &
                         (isis=='imgr_g11' .and. (iget(460)>0 .or. &
@@ -1261,6 +1277,9 @@ SUBROUTINE CALRAD_WCLOUD
                     else if(isis=='imgr_insat3d') then
                        sublat=0.0
                        sublon=74.0
+                    else if(isis=='ahi_himawari8') then
+                       sublat=0.0
+                       sublon=140.7
                     end if
 
 !                   use zenith angle = 53.1 for SSMI and SSMIS:
@@ -1666,8 +1685,9 @@ SUBROUTINE CALRAD_WCLOUD
               if (isis=='ssmi_f13')then  ! writing ssmi to grib (37 & 85 GHz)
               nc=0
               do ixchan=1,7
-                igot=iget(800)
                 ichan=ixchan
+                igot=iget(800)
+                if(igot>0) then
                 if(lvls(ixchan,igot).eq.1)then
                   nc=nc+1
                   do j=jsta,jend
@@ -1675,20 +1695,21 @@ SUBROUTINE CALRAD_WCLOUD
                       grid1(i,j)=tb(i,j,nc)
                     enddo
                   enddo
-                  id(1:25) = 0
-                  id(02) = 2
-                  id(08) = 118
-                  id(09) = 109
                   if (grib=="grib2") then
+                          cfld=cfld+1
+                          fld_info(cfld)%ifld=IAVBLFLD(igot)
+                          datapd(1:im,1:jend-jsta+1,cfld)=grid1(1:im,jsta:jend)
                   endif
                  endif
+                endif
               enddo
               end if  ! end of outputting ssmi f13
               if (isis=='ssmi_f14')then  ! writing ssmi to grib (19,37 & 85 GHz)
               nc=0
               do ixchan=1,7
-                igot=iget(806)
                 ichan=ixchan
+                igot=iget(806)
+                if(igot>0) then
                 if(lvls(ixchan,igot).eq.1)then
                   nc=nc+1
                   do j=jsta,jend
@@ -1696,21 +1717,21 @@ SUBROUTINE CALRAD_WCLOUD
                       grid1(i,j)=tb(i,j,nc)
                     enddo
                   enddo
-                  id(1:25) = 0
-                  id(02) = 2
-                  id(08) = 118
-                  id(09) = 109
-!                  print*,'id8=',id(8)
                   if (grib=="grib2") then
+                          cfld=cfld+1
+                          fld_info(cfld)%ifld=IAVBLFLD(igot)
+                          datapd(1:im,1:jend-jsta+1,cfld)=grid1(1:im,jsta:jend)
                   endif
                  endif
+                endif
               enddo
               end if  ! end of outputting ssmi f14
               if (isis=='ssmi_f15')then  ! writing ssmi to grib (19,37 & 85 GHz)
               nc=0
               do ixchan=1,7
-                igot=iget(812)
                 ichan=ixchan
+                igot=iget(812)
+                if(igot>0) then
                 if(lvls(ixchan,igot).eq.1)then
                   nc=nc+1
                   do j=jsta,jend
@@ -1718,21 +1739,21 @@ SUBROUTINE CALRAD_WCLOUD
                       grid1(i,j)=tb(i,j,nc)
                     enddo
                   enddo
-                  id(1:25) = 0
-                  id(02) = 2
-                  id(08) = 118
-                  id(09) = 109
-!                  print*,'id8=',id(8)
                   if (grib=="grib2") then
+                          cfld=cfld+1
+                          fld_info(cfld)%ifld=IAVBLFLD(igot)
+                          datapd(1:im,1:jend-jsta+1,cfld)=grid1(1:im,jsta:jend)
                   endif
                  endif
+                endif
               enddo
               end if  ! end of outputting ssmi f15
               if (isis=='ssmis_f16')then  ! writing ssmis to grib (183,19,37 & 85GHz)
               nc=0
               do ixchan=1,24
-                igot=iget(818)
                 ichan=ixchan
+                igot=iget(818)
+                if(igot>0) then
                 print*,'ixchan,lvls=',ixchan,lvls(ixchan,igot)
                 if(lvls(ixchan,igot).eq.1)then
                   nc=nc+1
@@ -1741,20 +1762,21 @@ SUBROUTINE CALRAD_WCLOUD
                       grid1(i,j)=tb(i,j,nc)
                     enddo
                   enddo
-                  id(1:25) = 0
-                  id(02) = 2
-                  id(08) = 118
-                  id(09) = 109
                   if (grib=="grib2") then
+                          cfld=cfld+1
+                          fld_info(cfld)%ifld=IAVBLFLD(igot)
+                          datapd(1:im,1:jend-jsta+1,cfld)=grid1(1:im,jsta:jend)
                   endif
                  endif
+                endif
               enddo
               end if  ! end of outputting ssmis f16
               if (isis=='ssmis_f17')then  ! writing ssmis to grib (183,19,37 &85GHz)
               nc=0
               do ixchan=1,24
-                igot=iget(825)
                 ichan=ixchan
+                igot=iget(825)
+                if(igot>0) then
                 if(lvls(ixchan,igot).eq.1)then
                   nc=nc+1
                   do j=jsta,jend
@@ -1762,21 +1784,21 @@ SUBROUTINE CALRAD_WCLOUD
                       grid1(i,j)=tb(i,j,nc)
                     enddo
                   enddo
-                  id(1:25) = 0
-                  id(02) = 2
-                  id(08) = 118
-                  id(09) = 109
-!                  print*,'id8=',id(8)
                   if (grib=="grib2") then
+                          cfld=cfld+1
+                          fld_info(cfld)%ifld=IAVBLFLD(igot)
+                          datapd(1:im,1:jend-jsta+1,cfld)=grid1(1:im,jsta:jend)
                   endif
                  endif
+                endif
               enddo
               end if  ! end of outputting ssmis f17
               if (isis=='ssmis_f18')then  ! writing ssmis to grib (183,19,37 &85GHz)
               nc=0
               do ixchan=1,24
-                igot=iget(832)
                 ichan=ixchan
+                igot=iget(832)
+                if(igot>0) then
                 if(lvls(ixchan,igot).eq.1)then
                   nc=nc+1
                   do j=jsta,jend
@@ -1784,21 +1806,21 @@ SUBROUTINE CALRAD_WCLOUD
                       grid1(i,j)=tb(i,j,nc)
                     enddo
                   enddo
-                  id(1:25) = 0
-                  id(02) = 2
-                  id(08) = 118
-                  id(09) = 109
-!                  print*,'id8=',id(8)
                   if (grib=="grib2") then
+                          cfld=cfld+1
+                          fld_info(cfld)%ifld=IAVBLFLD(igot)
+                          datapd(1:im,1:jend-jsta+1,cfld)=grid1(1:im,jsta:jend)
                   endif
                  endif
+                endif
               enddo
               end if  ! end of outputting ssmis f18
               if (isis=='ssmis_f19')then  ! writing ssmis to grib (183,19,37 &85GHz)
               nc=0
               do ixchan=1,24
-                igot=iget(839)
                 ichan=ixchan
+                igot=iget(839)
+                if(igot>0) then
                 if(lvls(ixchan,igot).eq.1)then
                   nc=nc+1
                   do j=jsta,jend
@@ -1806,21 +1828,21 @@ SUBROUTINE CALRAD_WCLOUD
                       grid1(i,j)=tb(i,j,nc)
                     enddo
                   enddo
-                  id(1:25) = 0
-                  id(02) = 2
-                  id(08) = 118
-                  id(09) = 109
-!                  print*,'id8=',id(8)
                   if (grib=="grib2") then
+                          cfld=cfld+1
+                          fld_info(cfld)%ifld=IAVBLFLD(igot)
+                          datapd(1:im,1:jend-jsta+1,cfld)=grid1(1:im,jsta:jend)
                   endif
                  endif
+                endif
               enddo
               end if  ! end of outputting ssmis f19
               if (isis=='ssmis_f20')then  ! writing ssmis to grib (183,19,37 &85GHz)
               nc=0
               do ixchan=1,24
-                igot=iget(846)
                 ichan=ixchan
+                igot=iget(846)
+                if(igot>0) then
                 if(lvls(ixchan,igot).eq.1)then
                   nc=nc+1
                   do j=jsta,jend
@@ -1828,14 +1850,13 @@ SUBROUTINE CALRAD_WCLOUD
                       grid1(i,j)=tb(i,j,nc)
                     enddo
                   enddo
-                  id(1:25) = 0
-                  id(02) = 2
-                  id(08) = 118
-                  id(09) = 109
-!                  print*,'id8=',id(8)
                   if (grib=="grib2") then
+                          cfld=cfld+1
+                          fld_info(cfld)%ifld=IAVBLFLD(igot)
+                          datapd(1:im,1:jend-jsta+1,cfld)=grid1(1:im,jsta:jend)
                   endif
                  endif
+                endif
               enddo
               end if  ! end of outputting ssmis f20
               if(isis=='imgr_mt2') then ! writing MTSAT-2 to grib
@@ -1849,10 +1870,6 @@ SUBROUTINE CALRAD_WCLOUD
                              grid1(i,j)=tb(i,j,nc)
                           enddo
                        enddo
-                       id(1:25) = 0
-                       id(02) = 2
-                       id(08) = 118
-                       id(09) = 109
                        if(grib=="grib2") then
                           cfld=cfld+1
                           fld_info(cfld)%ifld=IAVBLFLD(igot)
@@ -1872,11 +1889,7 @@ SUBROUTINE CALRAD_WCLOUD
                              grid1(i,j)=tb(i,j,nc)
                           enddo
                        enddo
-                       id(1:25) = 0
-                       id(02) = 2
-                       id(08) = 118
-                       id(09) = 109
-                       if(grib=="grib2") then
+                       if(grib=="grib2" )then
                           cfld=cfld+1
                           fld_info(cfld)%ifld=IAVBLFLD(igot)
                           datapd(1:im,1:jend-jsta+1,cfld)=grid1(1:im,jsta:jend)
@@ -1895,11 +1908,7 @@ SUBROUTINE CALRAD_WCLOUD
                              grid1(i,j)=tb(i,j,nc)
                           enddo
                        enddo
-                       id(1:25) = 0
-                       id(02) = 2
-                       id(08) = 118
-                       id(09) = 109
-                       if(grib=="grib2") then
+                       if(grib=="grib2" )then
                           cfld=cfld+1
                           fld_info(cfld)%ifld=IAVBLFLD(igot)
                           datapd(1:im,1:jend-jsta+1,cfld)=grid1(1:im,jsta:jend)
@@ -1917,10 +1926,7 @@ SUBROUTINE CALRAD_WCLOUD
                              grid1(i,j)=tb(i,j,ichan)
                           enddo
                        enddo
-                       id(1:25) = 0
-                       id(02) = 130
-                       id(8) = 240 + ixchan 
-                       if(grib=="grib2") then
+                       if(grib=="grib2" )then
                           cfld=cfld+1
                           fld_info(cfld)%ifld=IAVBLFLD(igot)
                           datapd(1:im,1:jend-jsta+1,cfld)=grid1(1:im,jsta:jend)
@@ -1938,10 +1944,7 @@ SUBROUTINE CALRAD_WCLOUD
                              grid1(i,j)=tb(i,j,ichan)
                           enddo
                        enddo
-                       id(1:25) = 0
-                       id(02) = 129
-                       id(8) = 212 + ixchan
-                       if(grib=="grib2") then
+                       if(grib=="grib2" )then
                           cfld=cfld+1
                           fld_info(cfld)%ifld=IAVBLFLD(igot)
                           datapd(1:im,1:jend-jsta+1,cfld)=grid1(1:im,jsta:jend)
@@ -1954,6 +1957,7 @@ SUBROUTINE CALRAD_WCLOUD
                  do ixchan=1,8
                    ichan=ixchan
                    igot=iget(876)
+                   if(igot>0) then
                    if(lvls(ixchan,igot).eq.1)then
                     nc=nc+1
                     do j=jsta,jend
@@ -1961,21 +1965,21 @@ SUBROUTINE CALRAD_WCLOUD
                       grid1(i,j)=tb(i,j,nc)
                      enddo
                     enddo
-                    id(1:25) = 0
-                    id(02) = 2
-                    id(08) = 118
-                    id(09) = 109
-!                    print*,'id8=',id(8)
                     if (grib=="grib2") then
+                          cfld=cfld+1
+                          fld_info(cfld)%ifld=IAVBLFLD(igot)
+                          datapd(1:im,1:jend-jsta+1,cfld)=grid1(1:im,jsta:jend)
                     endif
-                 endif
+                   endif
+                   endif
                  enddo
               end if  ! end of outputting msg/seviri 10
               if (isis=='imgr_g13')then  ! writing goes 13 to grib
                  nc=0
                  do ixchan=1,4
-                   igot=iget(868)
                    ichan=ixchan
+                   igot=iget(868)
+                   if(igot>0) then
                    if(lvls(ixchan,igot).eq.1)then
                     nc=nc+1
                     do j=jsta,jend
@@ -1983,21 +1987,21 @@ SUBROUTINE CALRAD_WCLOUD
                       grid1(i,j)=tb(i,j,nc)
                      enddo
                     enddo
-                    id(1:25) = 0
-                    id(02) = 2
-                    id(08) = 118
-                    id(09) = 109
-!                    print*,'id8=',id(8)
                     if (grib=="grib2") then
+                          cfld=cfld+1
+                          fld_info(cfld)%ifld=IAVBLFLD(igot)
+                          datapd(1:im,1:jend-jsta+1,cfld)=grid1(1:im,jsta:jend)
                     endif
-                 endif
+                   endif
+                   endif
                  enddo
               end if  ! end of outputting goes 13
               if (isis=='imgr_g15')then  ! writing goes 15 to grib
                  nc=0
                  do ixchan=1,4
-                   igot=iget(872)
                    ichan=ixchan
+                   igot=iget(872)
+                   if(igot>0) then
                    if(lvls(ixchan,igot).eq.1)then
                     nc=nc+1
                     do j=jsta,jend
@@ -2005,31 +2009,26 @@ SUBROUTINE CALRAD_WCLOUD
                       grid1(i,j)=tb(i,j,nc)
                      enddo
                     enddo
-                    id(1:25) = 0
-                    id(02) = 2
-                    id(08) = 118
-                    id(09) = 109
-!                    print*,'id8=',id(8)
                     if (grib=="grib2") then
+                          cfld=cfld+1
+                          fld_info(cfld)%ifld=IAVBLFLD(igot)
+                          datapd(1:im,1:jend-jsta+1,cfld)=grid1(1:im,jsta:jend)
                     endif
-                 endif
+                   endif
+                   endif
                  enddo
               end if  ! end of outputting goes 15
               if (isis=='abi_g16')then  ! writing goes 16 to grib
                  nc=0
                  do ixchan=1,10
-                   igot=iget(926+ixchan)
                    ichan=ixchan
+                   igot=iget(926+ixchan)
                    if(igot>0)then
                     do j=jsta,jend
                      do i=1,im
                       grid1(i,j)=tb(i,j,ichan)
                      enddo
                     enddo
-                    id(1:25) = 0
-                    id(02) = 2
-                    id(08) = 118
-                    id(09) = 109
                     if(grib=="grib2" )then
                      cfld=cfld+1
                      fld_info(cfld)%ifld=IAVBLFLD(igot)
@@ -2041,18 +2040,14 @@ SUBROUTINE CALRAD_WCLOUD
               if (isis=='abi_g17')then  ! writing goes 16 to grib
                  nc=0
                  do ixchan=1,10
-                   igot=iget(936+ixchan)
                    ichan=ixchan
+                   igot=iget(936+ixchan)
                    if(igot>0)then
                     do j=jsta,jend
                      do i=1,im
                       grid1(i,j)=tb(i,j,ichan)
                      enddo
                     enddo
-                    id(1:25) = 0
-                    id(02) = 2
-                    id(08) = 118
-                    id(09) = 109
                     if(grib=="grib2" )then
                      cfld=cfld+1
                      fld_info(cfld)%ifld=IAVBLFLD(igot)
@@ -2061,6 +2056,23 @@ SUBROUTINE CALRAD_WCLOUD
                    endif
                  enddo ! channel loop
               end if  ! end of outputting goes 17
+              if(isis=='ahi_himawari8') then ! writing Himawari-8 AHI to grib
+                 do ichan=1,10
+                    igot=iget(968+ichan)
+                      if(igot>0)then
+                       do j=jsta,jend
+                          do i=1,im
+                             grid1(i,j)=tb(i,j,ichan)
+                          enddo
+                       enddo
+                       if(grib=="grib2" )then
+                        cfld=cfld+1
+                        fld_info(cfld)%ifld=IAVBLFLD(igot)
+                        datapd(1:im,1:jend-jsta+1,cfld)=grid1(1:im,jsta:jend)
+                       endif
+                    endif
+                 enddo
+              endif ! end of outputting himawari-8 ahi
 
            end if nonnadir  ! end if for computing simulated radiance with zenith angle correction
       
@@ -2094,7 +2106,7 @@ REAL FUNCTION EFFR(pmid,t,q,qqw,qqi,qqr,f_rimef, nlice, nrain, &
 !       JASON OTKIN AND WILLIAM LEWIS
 !       09 DECEMBER 2014
 
-  use params_mod, only: pi, rd, d608
+  use params_mod, only: pi, rd, d608, rg
 
         implicit none
 
@@ -2146,7 +2158,7 @@ REAL FUNCTION EFFR(pmid,t,q,qqw,qqi,qqr,f_rimef, nlice, nrain, &
         real, parameter :: min_c=2.e-6,  min_r=20.e-6, min_i=4.e-6,min_s=20.e-6, min_g=20.e-6
         real, parameter :: max_c=1.e-2,  max_r=1.e-2,  max_i=1.e-3,max_s=2.e-2,  max_g=5.e-0
 
-        real    :: rg, am_g, bm_g, mu_g
+        real    :: am_g, bm_g, mu_g
         real    :: cgg(3), cge(3), oge1, obmg, ogg1, ogg2
 
         double precision :: no_exp, no_min, lm_exp, lamg, lamc, lamr, lami, lams
